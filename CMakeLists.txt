@@ -3,4 +3,6 @@ project(DVariant)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_library(DVariant SHARED DVariant.cpp)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+add_library(DVariant SHARED DVariant.cpp main.cpp)

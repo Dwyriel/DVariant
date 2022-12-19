@@ -3,25 +3,42 @@
 
 #include <string>
 
-class DVariant{
+class DVariant {
+    enum class Type {
+        String, Double, LongLong, Integer
+    };
+
     std::string valueAsString;
+    Type type;
 
 public:
-    DVariant();
-    explicit DVariant(std::string value);
-    explicit DVariant(double value);
-    explicit DVariant(long long value);
-    explicit DVariant(bool value);
+    DVariant() noexcept;
 
-    std::string GetString();
-    double GetDouble();
-    long long GetInteger();
-    bool GetBool();
+    explicit DVariant(std::string value) noexcept;
 
-    DVariant& operator=(std::string value);
-    DVariant& operator=(double value);
-    DVariant& operator=(long long value);
-    DVariant& operator=(bool value);
+    explicit DVariant(double value) noexcept;
+
+    explicit DVariant(long long value) noexcept;
+
+    explicit DVariant(int value) noexcept;
+
+    explicit DVariant(bool value) noexcept;
+
+    const std::string &GetString() noexcept;
+
+    double GetDouble() noexcept;
+
+    long long GetInteger() noexcept;
+
+    bool GetBool() noexcept;
+
+    DVariant &operator=(std::string value) noexcept;
+
+    DVariant &operator=(double value) noexcept;
+
+    DVariant &operator=(long long value) noexcept;
+
+    DVariant &operator=(int value) noexcept;
 };
 
 #endif //EXECS_DWYVARIANT_H
