@@ -1,5 +1,5 @@
-#ifndef EXECS_DWYVARIANT_H
-#define EXECS_DWYVARIANT_H
+#ifndef DWYVARIANT_H
+#define DWYVARIANT_H
 
 #include <string>
 
@@ -14,15 +14,13 @@ class DVariant {
 public:
     DVariant() noexcept;
 
-    explicit DVariant(std::string value) noexcept;
+    DVariant(std::string value) noexcept;
 
-    explicit DVariant(double value) noexcept;
+    DVariant(double value) noexcept;
 
-    explicit DVariant(long long value) noexcept;
+    DVariant(long long value) noexcept;
 
-    explicit DVariant(int value) noexcept;
-
-    explicit DVariant(bool value) noexcept;
+    DVariant(int value) noexcept;
 
     const std::string &GetString() noexcept;
 
@@ -41,4 +39,4 @@ public:
     DVariant &operator=(int value) noexcept;
 };
 
-#endif //EXECS_DWYVARIANT_H
+#endif //DWYVARIANT_H

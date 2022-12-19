@@ -14,9 +14,6 @@ DVariant::DVariant(long long value) noexcept: valueAsString(std::move(std::to_st
 DVariant::DVariant(int value) noexcept: valueAsString(std::move(std::to_string(value))), type{Type::Integer} {
 }
 
-DVariant::DVariant(bool value) noexcept: valueAsString(std::move(std::to_string(value))), type{Type::Integer} {
-}
-
 const std::string &DVariant::GetString() noexcept {
     return valueAsString;
 }
