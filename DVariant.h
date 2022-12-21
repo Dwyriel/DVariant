@@ -4,12 +4,7 @@
 #include <string>
 
 class DVariant {
-    enum class Type {
-        String, Double, LongLong, Integer
-    };
-
     std::string valueAsString;
-    Type type;
 
 public:
     DVariant() noexcept;
