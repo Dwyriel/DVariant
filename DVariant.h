@@ -4,9 +4,16 @@
 #include <string>
 
 class DVariant {
+    enum class Type {
+        String, Double, Integer, Boolean
+    };
+
     std::string valueAsString;
+    Type type;
 
 public:
+    using Type = Type;
+
     DVariant() noexcept;
 
     DVariant(std::string value) noexcept;
@@ -19,13 +26,17 @@ public:
 
     DVariant(int value) noexcept;
 
-    std::string &GetString() noexcept;
+    DVariant(bool value) noexcept;
 
-    double GetDouble() noexcept;
+    std::string &AsString() noexcept;
 
-    long long GetInteger() noexcept;
+    double AsDouble() noexcept;
 
-    bool GetBool() noexcept;
+    long long AsInteger() noexcept;
+
+    bool AsBool() noexcept;
+
+    Type GetType();
 
     DVariant &operator=(std::string value) noexcept;
 
@@ -36,6 +47,8 @@ public:
     DVariant &operator=(long long value) noexcept;
 
     DVariant &operator=(int value) noexcept;
+
+    DVariant &operator=(bool value) noexcept;
 };
 
 #endif //DWYVARIANT_H
