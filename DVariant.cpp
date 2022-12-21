@@ -2,19 +2,17 @@
 
 DVariant::DVariant() noexcept: type(Type::String) {}
 
-DVariant::DVariant(std::string value) noexcept: valueAsString(std::move(value)), type{Type::String} {
-}
+DVariant::DVariant(std::string value) noexcept: valueAsString(std::move(value)), type{Type::String} {}
 
-DVariant::DVariant(double value) noexcept: valueAsString(std::move(std::to_string(value))), type{Type::Double} {
-}
+DVariant::DVariant(const char *value) noexcept: valueAsString(value), type(Type::String) {}
 
-DVariant::DVariant(long long value) noexcept: valueAsString(std::move(std::to_string(value))), type{Type::LongLong} {
-}
+DVariant::DVariant(double value) noexcept: valueAsString(std::move(std::to_string(value))), type{Type::Double} {}
 
-DVariant::DVariant(int value) noexcept: valueAsString(std::move(std::to_string(value))), type{Type::Integer} {
-}
+DVariant::DVariant(long long value) noexcept: valueAsString(std::move(std::to_string(value))), type{Type::LongLong} {}
 
-const std::string &DVariant::GetString() noexcept {
+DVariant::DVariant(int value) noexcept: valueAsString(std::move(std::to_string(value))), type{Type::Integer} {}
+
+std::string &DVariant::GetString() noexcept {
     return valueAsString;
 }
 
@@ -36,6 +34,12 @@ bool DVariant::GetBool() noexcept {
 
 DVariant &DVariant::operator=(std::string value) noexcept {
     valueAsString = std::move(value);
+    type = Type::String;
+    return *this;
+}
+
+DVariant &DVariant::operator=(const char *value) noexcept {
+    valueAsString = value;
     type = Type::String;
     return *this;
 }

@@ -16,13 +16,15 @@ public:
 
     DVariant(std::string value) noexcept;
 
+    DVariant(const char *value) noexcept;
+
     DVariant(double value) noexcept;
 
     DVariant(long long value) noexcept;
 
     DVariant(int value) noexcept;
 
-    const std::string &GetString() noexcept;
+    std::string &GetString() noexcept;
 
     double GetDouble() noexcept;
 
@@ -31,6 +33,8 @@ public:
     bool GetBool() noexcept;
 
     DVariant &operator=(std::string value) noexcept;
+
+    DVariant &operator=(const char *value) noexcept;
 
     DVariant &operator=(double value) noexcept;
 
