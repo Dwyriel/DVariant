@@ -5,11 +5,14 @@
 
 class DVariant {
     enum class Type {
-        String, Double, Integer, Boolean
+        String, FloatingPoint, Integer, Boolean
     };
 
-    std::string valueAsString;
-    Type type;
+    Type m_type;
+    void *m_data;
+    size_t m_size;
+
+    void modifyData(void *from, size_t size, Type type);
 
 public:
     using Type = Type;
@@ -28,7 +31,7 @@ public:
 
     DVariant(bool value) noexcept;
 
-    std::string &AsString() noexcept;
+    std::string AsString() noexcept;
 
     double AsDouble() noexcept;
 
@@ -38,9 +41,9 @@ public:
 
     Type GetType();
 
-    DVariant &operator=(std::string value) noexcept;
-
     DVariant &operator=(const char *value) noexcept;
+
+    DVariant &operator=(const std::string &value) noexcept;
 
     DVariant &operator=(double value) noexcept;
 
