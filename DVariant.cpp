@@ -1,71 +1,147 @@
 #include "DVariant.h"
+#include <cstring>
 
-DVariant::DVariant() noexcept: type(Type::String) {}
+const size_t defaultSize = 9;
 
-DVariant::DVariant(std::string value) noexcept: valueAsString(std::move(value)), type(Type::String) {}
-
-DVariant::DVariant(const char *value) noexcept: valueAsString(value), type(Type::String) {}
-
-DVariant::DVariant(double value) noexcept: valueAsString(std::move(std::to_string(value))), type(Type::Double) {}
-
-DVariant::DVariant(long long value) noexcept: valueAsString(std::move(std::to_string(value))), type(Type::Integer) {}
-
-DVariant::DVariant(int value) noexcept: valueAsString(std::move(std::to_string(value))), type(Type::Integer) {}
-
-DVariant::DVariant(bool value) noexcept: valueAsString(std::move(std::to_string(value))), type(Type::Boolean) {}
-
-std::string &DVariant::AsString() noexcept {
-    return valueAsString;
+DVariant::DVariant() noexcept: m_type(Type::String) {
+    m_size = defaultSize;
+    m_data = calloc(m_size, 1);
 }
 
-double DVariant::AsDouble() noexcept {
-    return strtod(valueAsString.c_str(), nullptr);
+DVariant::DVariant(const char *value) noexcept: m_type(Type::String) {
+    m_size = strlen(value) + 1;
+    m_data = malloc(m_size);
+    memcpy(m_data, value, m_size);
 }
 
-long long DVariant::AsInteger() noexcept {
-    return strtoll(valueAsString.c_str(), nullptr, 10);
+DVariant::DVariant(const std::string &value) noexcept: m_type(Type::String) {
+    m_size = value.size() + 1;
+    m_data = malloc(m_size);
+    memcpy(m_data, value.c_str(), m_size);
 }
 
-bool DVariant::AsBool() noexcept {
-    return strtol(valueAsString.c_str(), nullptr, 10);
+DVariant::DVariant(double value) noexcept: m_type(Type::FloatingPoint) {
+    m_size = defaultSize;
+    m_data = calloc(m_size, 1);
+    memcpy(m_data, &value, sizeof(value));
 }
 
-DVariant::Type DVariant::GetType() {
-    return type;
+DVariant::DVariant(long long int value) noexcept: m_type(Type::Integer) {
+    m_size = defaultSize;
+    m_data = calloc(m_size, 1);
+    memcpy(m_data, &value, sizeof(value));
 }
 
-DVariant &DVariant::operator=(std::string value) noexcept {
-    valueAsString = std::move(value);
-    type = Type::String;
-    return *this;
+DVariant::DVariant(int value) noexcept: m_type(Type::Integer) {
+    m_size = defaultSize;
+    m_data = calloc(m_size, 1);
+    memcpy(m_data, &value, sizeof(value));
+}
+
+DVariant::DVariant(bool value) noexcept: m_type(Type::Boolean) {
+    m_size = defaultSize;
+    m_data = calloc(m_size, 1);
+    memcpy(m_data, &value, sizeof(value));
+}
+
+DVariant::DVariant(const DVariant &dVariant) noexcept {
+    m_type = dVariant.m_type;
+    m_size = m_type == Type::String ? dVariant.m_size : defaultSize;
+    m_data = malloc(m_size);
+    memcpy(m_data, dVariant.m_data, m_size);//if not string, 9th byte should be set to 0 at this point per constructor/operator= behavior.
+}
+
+DVariant::DVariant(DVariant &&dVariant) noexcept {
+    m_type = dVariant.m_type;
+    m_size = dVariant.m_size;
+    m_data = dVariant.m_data;
+    dVariant.m_data = nullptr;
+}
+
+DVariant::~DVariant() {
+    free(m_data);
+}
+
+void DVariant::modifyData(const void *from, size_t size, DVariant::Type type) {
+    memset(m_data, 0, defaultSize);
+    memcpy(m_data, from, size);
+    m_type = type;
+}
+
+std::string DVariant::AsString() const noexcept {
+    std::string str = (const char *) m_data;
+    return str;
+}
+
+double DVariant::AsDouble() const noexcept {
+    return *((double *) m_data);
+}
+
+long long DVariant::AsInteger() const noexcept {
+    return *((long long *) m_data);
+}
+
+bool DVariant::AsBool() const noexcept {
+    return *((bool *) m_data);
+}
+
+DVariant::Type DVariant::GetType() const {
+    return m_type;
 }
 
 DVariant &DVariant::operator=(const char *value) noexcept {
-    valueAsString = value;
-    type = Type::String;
+    size_t strSize = strlen(value) + 1;
+    if (strSize > m_size) {
+        m_data = realloc(m_data, strSize);
+        m_size = strSize;
+    }
+    memcpy(m_data, value, strSize);
+    m_type = Type::String;
+    return *this;
+}
+
+DVariant &DVariant::operator=(const std::string &value) noexcept {
+    operator=(value.c_str());
     return *this;
 }
 
 DVariant &DVariant::operator=(double value) noexcept {
-    valueAsString = std::move(std::to_string(value));
-    type = Type::Double;
+    modifyData(&value, sizeof(value), Type::FloatingPoint);
     return *this;
 }
 
-DVariant &DVariant::operator=(long long value) noexcept {
-    valueAsString = std::move(std::to_string(value));
-    type = Type::Integer;
+DVariant &DVariant::operator=(long long int value) noexcept {
+    modifyData(&value, sizeof(value), Type::Integer);
     return *this;
 }
 
 DVariant &DVariant::operator=(int value) noexcept {
-    valueAsString = std::move(std::to_string(value));
-    type = Type::Integer;
+    modifyData(&value, sizeof(value), Type::Integer);
     return *this;
 }
 
 DVariant &DVariant::operator=(bool value) noexcept {
-    valueAsString = std::move(std::to_string(value));
-    type = Type::Boolean;
+    modifyData(&value, sizeof(value), Type::Boolean);
+    return *this;
+}
+
+DVariant &DVariant::operator=(const DVariant &dVariant) noexcept {
+    if(this == &dVariant)
+        return *this;
+    if (dVariant.m_type == Type::String && dVariant.m_size > m_size) {
+        m_data = realloc(m_data, dVariant.m_size);
+        m_size = dVariant.m_size;
+    }
+    memcpy(m_data, dVariant.m_data, dVariant.m_size);//check copy constructor
+    m_type = dVariant.m_type;
+    return *this;
+}
+
+DVariant &DVariant::operator=(DVariant &&dVariant) noexcept {
+    free(m_data);
+    m_type = dVariant.m_type;
+    m_size = dVariant.m_size;
+    m_data = dVariant.m_data;
+    dVariant.m_data = nullptr;
     return *this;
 }

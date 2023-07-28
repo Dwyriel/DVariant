@@ -1,24 +1,27 @@
-#ifndef DWYVARIANT_H
-#define DWYVARIANT_H
+#ifndef DVARIANT_H
+#define DVARIANT_H
 
 #include <string>
 
 class DVariant {
     enum class Type {
-        String, Double, Integer, Boolean
+        String, FloatingPoint, Integer, Boolean
     };
 
-    std::string valueAsString;
-    Type type;
+    Type m_type;
+    void *m_data;
+    size_t m_size;
+
+    void modifyData(const void *from, size_t size, DVariant::Type type);
 
 public:
     using Type = Type;
 
     DVariant() noexcept;
 
-    DVariant(std::string value) noexcept;
-
     DVariant(const char *value) noexcept;
+
+    DVariant(const std::string &value) noexcept;
 
     DVariant(double value) noexcept;
 
@@ -28,19 +31,25 @@ public:
 
     DVariant(bool value) noexcept;
 
-    std::string &AsString() noexcept;
+    DVariant(const DVariant &dVariant) noexcept;
 
-    double AsDouble() noexcept;
+    DVariant(DVariant &&dVariant) noexcept;
 
-    long long AsInteger() noexcept;
+    ~DVariant();
 
-    bool AsBool() noexcept;
+    std::string AsString() const noexcept;
 
-    Type GetType();
+    double AsDouble() const noexcept;
 
-    DVariant &operator=(std::string value) noexcept;
+    long long AsInteger() const noexcept;
+
+    bool AsBool() const noexcept;
+
+    Type GetType() const;
 
     DVariant &operator=(const char *value) noexcept;
+
+    DVariant &operator=(const std::string &value) noexcept;
 
     DVariant &operator=(double value) noexcept;
 
@@ -49,6 +58,10 @@ public:
     DVariant &operator=(int value) noexcept;
 
     DVariant &operator=(bool value) noexcept;
+
+    DVariant &operator=(const DVariant &dVariant) noexcept;
+
+    DVariant &operator=(DVariant &&dVariant) noexcept;
 };
 
-#endif //DWYVARIANT_H
+#endif //DVARIANT_H
