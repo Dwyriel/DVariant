@@ -77,8 +77,10 @@ DVariant::Type DVariant::GetType() const {
 
 DVariant &DVariant::operator=(const char *value) noexcept {
     size_t strSize = strlen(value) + 1;
-    if (strSize > m_size)
+    if (strSize > m_size) {
         m_data = realloc(m_data, strSize);
+        m_size = strSize;
+    }
     memcpy(m_data, value, strSize);
     m_type = Type::String;
     return *this;
