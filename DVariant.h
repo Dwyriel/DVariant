@@ -31,7 +31,9 @@ public:
 
     DVariant(bool value) noexcept;
 
-    DVariant(const DVariant &dVariant);
+    DVariant(const DVariant &dVariant) noexcept;
+
+    DVariant(DVariant &&dVariant) noexcept;
 
     ~DVariant();
 
@@ -56,6 +58,10 @@ public:
     DVariant &operator=(int value) noexcept;
 
     DVariant &operator=(bool value) noexcept;
+
+    DVariant &operator=(const DVariant &dVariant) noexcept;
+
+    DVariant &operator=(DVariant &&dVariant) noexcept;
 };
 
 #endif //DVARIANT_H

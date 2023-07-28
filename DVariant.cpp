@@ -44,6 +44,20 @@ DVariant::DVariant(bool value) noexcept: m_type(Type::Boolean) {
     memcpy(m_data, &value, sizeof(value));
 }
 
+DVariant::DVariant(const DVariant &dVariant) noexcept {
+    m_type = dVariant.m_type;
+    m_size = m_type == Type::String ? dVariant.m_size : defaultSize;
+    m_data = malloc(m_size);
+    memcpy(m_data, dVariant.m_data, m_size);//if not string, 9th byte should be set to 0 at this point per constructor/operator= behavior.
+}
+
+DVariant::DVariant(DVariant &&dVariant) noexcept {
+    m_type = dVariant.m_type;
+    m_size = dVariant.m_size;
+    m_data = dVariant.m_data;
+    dVariant.m_data = nullptr;
+}
+
 DVariant::~DVariant() {
     free(m_data);
 }
@@ -108,5 +122,26 @@ DVariant &DVariant::operator=(int value) noexcept {
 
 DVariant &DVariant::operator=(bool value) noexcept {
     modifyData(&value, sizeof(value), Type::Boolean);
+    return *this;
+}
+
+DVariant &DVariant::operator=(const DVariant &dVariant) noexcept {
+    if(this == &dVariant)
+        return *this;
+    if (dVariant.m_type == Type::String && dVariant.m_size > m_size) {
+        m_data = realloc(m_data, dVariant.m_size);
+        m_size = dVariant.m_size;
+    }
+    memcpy(m_data, dVariant.m_data, dVariant.m_size);//check copy constructor
+    m_type = dVariant.m_type;
+    return *this;
+}
+
+DVariant &DVariant::operator=(DVariant &&dVariant) noexcept {
+    free(m_data);
+    m_type = dVariant.m_type;
+    m_size = dVariant.m_size;
+    m_data = dVariant.m_data;
+    dVariant.m_data = nullptr;
     return *this;
 }
