@@ -1,34 +1,77 @@
 #include "DVariant.h"
 #include <cstring>
 
+const size_t defaultSize = 9;
+
 DVariant::DVariant() noexcept: m_type(Type::String) {
-    m_size = 9;
+    m_size = defaultSize;
     m_data = calloc(m_size, 1);
 }
 
-void DVariant::modifyData(void *from, size_t size, DVariant::Type type) {
+DVariant::DVariant(const char *value) noexcept: m_type(Type::String) {
+    m_size = strlen(value) + 1;
+    m_data = malloc(m_size);
+    memcpy(m_data, value, m_size);
+}
+
+DVariant::DVariant(const std::string &value) noexcept: m_type(Type::String) {
+    m_size = value.size() + 1;
+    m_data = malloc(m_size);
+    memcpy(m_data, value.c_str(), m_size);
+}
+
+DVariant::DVariant(double value) noexcept: m_type(Type::FloatingPoint) {
+    m_size = defaultSize;
+    m_data = calloc(m_size, 1);
+    memcpy(m_data, &value, sizeof(value));
+}
+
+DVariant::DVariant(long long int value) noexcept: m_type(Type::Integer) {
+    m_size = defaultSize;
+    m_data = calloc(m_size, 1);
+    memcpy(m_data, &value, sizeof(value));
+}
+
+DVariant::DVariant(int value) noexcept: m_type(Type::Integer) {
+    m_size = defaultSize;
+    m_data = calloc(m_size, 1);
+    memcpy(m_data, &value, sizeof(value));
+}
+
+DVariant::DVariant(bool value) noexcept: m_type(Type::Boolean) {
+    m_size = defaultSize;
+    m_data = calloc(m_size, 1);
+    memcpy(m_data, &value, sizeof(value));
+}
+
+DVariant::~DVariant() {
+    free(m_data);
+}
+
+void DVariant::modifyData(const void *from, size_t size, DVariant::Type type) {
+    memset(m_data, 0, defaultSize);
     memcpy(m_data, from, size);
     m_type = type;
 }
 
-std::string DVariant::AsString() noexcept {
+std::string DVariant::AsString() const noexcept {
     std::string str = (const char *) m_data;
     return str;
 }
 
-double DVariant::AsDouble() noexcept {
+double DVariant::AsDouble() const noexcept {
     return *((double *) m_data);
 }
 
-long long DVariant::AsInteger() noexcept {
+long long DVariant::AsInteger() const noexcept {
     return *((long long *) m_data);
 }
 
-bool DVariant::AsBool() noexcept {
+bool DVariant::AsBool() const noexcept {
     return *((bool *) m_data);
 }
 
-DVariant::Type DVariant::GetType() {
+DVariant::Type DVariant::GetType() const {
     return m_type;
 }
 

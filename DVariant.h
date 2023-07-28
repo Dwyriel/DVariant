@@ -1,5 +1,5 @@
-#ifndef DWYVARIANT_H
-#define DWYVARIANT_H
+#ifndef DVARIANT_H
+#define DVARIANT_H
 
 #include <string>
 
@@ -12,16 +12,16 @@ class DVariant {
     void *m_data;
     size_t m_size;
 
-    void modifyData(void *from, size_t size, Type type);
+    void modifyData(const void *from, size_t size, DVariant::Type type);
 
 public:
     using Type = Type;
 
     DVariant() noexcept;
 
-    DVariant(std::string value) noexcept;
-
     DVariant(const char *value) noexcept;
+
+    DVariant(const std::string &value) noexcept;
 
     DVariant(double value) noexcept;
 
@@ -31,15 +31,19 @@ public:
 
     DVariant(bool value) noexcept;
 
-    std::string AsString() noexcept;
+    DVariant(const DVariant &dVariant);
 
-    double AsDouble() noexcept;
+    ~DVariant();
 
-    long long AsInteger() noexcept;
+    std::string AsString() const noexcept;
 
-    bool AsBool() noexcept;
+    double AsDouble() const noexcept;
 
-    Type GetType();
+    long long AsInteger() const noexcept;
+
+    bool AsBool() const noexcept;
+
+    Type GetType() const;
 
     DVariant &operator=(const char *value) noexcept;
 
@@ -54,4 +58,4 @@ public:
     DVariant &operator=(bool value) noexcept;
 };
 
-#endif //DWYVARIANT_H
+#endif //DVARIANT_H
