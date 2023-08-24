@@ -4,8 +4,8 @@
 #include <string>
 
 class DVariant {
-    enum class Type {
-        String, FloatingPoint, Integer, Boolean
+    enum class Type : u_int8_t {
+        Object, String, FloatingPoint, Integer, Boolean
     };
 
     Type m_type;
@@ -18,6 +18,8 @@ public:
     using Type = Type;
 
     DVariant() noexcept;
+
+    DVariant(void *value, size_t size) noexcept;
 
     DVariant(const char *value) noexcept;
 
@@ -36,6 +38,12 @@ public:
     DVariant(DVariant &&dVariant) noexcept;
 
     ~DVariant();
+
+    void CustomObject(void *value, size_t size) noexcept;
+
+    void *AsCustom() const noexcept;
+
+    const char *AsCString() const noexcept;
 
     std::string AsString() const noexcept;
 

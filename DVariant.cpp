@@ -8,6 +8,12 @@ DVariant::DVariant() noexcept: m_type(Type::String) {
     m_data = calloc(m_size, 1);
 }
 
+DVariant::DVariant(void *value, size_t size) noexcept: m_type(Type::Object) {
+    m_size = size > defaultSize ? size : defaultSize;
+    m_data = malloc(m_size);
+    memcpy(m_data, value, size);
+}
+
 DVariant::DVariant(const char *value) noexcept: m_type(Type::String) {
     m_size = strlen(value) + 1;
     m_data = malloc(m_size);
@@ -48,7 +54,7 @@ DVariant::DVariant(const DVariant &dVariant) noexcept {
     m_type = dVariant.m_type;
     m_size = m_type == Type::String ? dVariant.m_size : defaultSize;
     m_data = malloc(m_size);
-    memcpy(m_data, dVariant.m_data, m_size);//if not string, 9th byte should be set to 0 at this point per constructor/operator= behavior.
+    memcpy(m_data, dVariant.m_data, m_size);//if not string/object, 9th byte should be set to 0 at this point per constructor/operator= behavior.
 }
 
 DVariant::DVariant(DVariant &&dVariant) noexcept {
@@ -62,10 +68,27 @@ DVariant::~DVariant() {
     free(m_data);
 }
 
-void DVariant::modifyData(const void *from, size_t size, DVariant::Type type) {
+inline void DVariant::modifyData(const void *from, size_t size, DVariant::Type type) {
     memset(m_data, 0, defaultSize);
     memcpy(m_data, from, size);
     m_type = type;
+}
+
+void DVariant::CustomObject(void *value, size_t size) noexcept {
+    if (size > m_size) {
+        m_data = realloc(m_data, size);
+        m_size = size;
+    }
+    memcpy(m_data, value, size);
+    m_type = Type::Object;
+}
+
+void *DVariant::AsCustom() const noexcept {
+    return m_data;
+}
+
+const char *DVariant::AsCString() const noexcept {
+    return (char *) m_data;
 }
 
 std::string DVariant::AsString() const noexcept {
