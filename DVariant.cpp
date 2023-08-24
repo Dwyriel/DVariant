@@ -26,13 +26,13 @@ DVariant::DVariant(double value) noexcept: m_type(Type::FloatingPoint) {
     memcpy(m_data, &value, sizeof(value));
 }
 
-DVariant::DVariant(long long int value) noexcept: m_type(Type::Integer) {
+DVariant::DVariant(int64_t value) noexcept: m_type(Type::Integer) {
     m_size = defaultSize;
     m_data = calloc(m_size, 1);
     memcpy(m_data, &value, sizeof(value));
 }
 
-DVariant::DVariant(int value) noexcept: m_type(Type::Integer) {
+DVariant::DVariant(int32_t value) noexcept: m_type(Type::Integer) {
     m_size = defaultSize;
     m_data = calloc(m_size, 1);
     memcpy(m_data, &value, sizeof(value));
@@ -77,8 +77,8 @@ double DVariant::AsDouble() const noexcept {
     return *((double *) m_data);
 }
 
-long long DVariant::AsInteger() const noexcept {
-    return *((long long *) m_data);
+int64_t DVariant::AsInteger() const noexcept {
+    return *((int64_t *) m_data);
 }
 
 bool DVariant::AsBool() const noexcept {
@@ -110,12 +110,12 @@ DVariant &DVariant::operator=(double value) noexcept {
     return *this;
 }
 
-DVariant &DVariant::operator=(long long int value) noexcept {
+DVariant &DVariant::operator=(int64_t value) noexcept {
     modifyData(&value, sizeof(value), Type::Integer);
     return *this;
 }
 
-DVariant &DVariant::operator=(int value) noexcept {
+DVariant &DVariant::operator=(int32_t value) noexcept {
     modifyData(&value, sizeof(value), Type::Integer);
     return *this;
 }
@@ -126,7 +126,7 @@ DVariant &DVariant::operator=(bool value) noexcept {
 }
 
 DVariant &DVariant::operator=(const DVariant &dVariant) noexcept {
-    if(this == &dVariant)
+    if (this == &dVariant)
         return *this;
     if (dVariant.m_type == Type::String && dVariant.m_size > m_size) {
         m_data = realloc(m_data, dVariant.m_size);

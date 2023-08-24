@@ -25,9 +25,9 @@ public:
 
     DVariant(double value) noexcept;
 
-    DVariant(long long value) noexcept;
+    DVariant(int64_t value) noexcept;
 
-    DVariant(int value) noexcept;
+    DVariant(int32_t value) noexcept;
 
     DVariant(bool value) noexcept;
 
@@ -41,7 +41,7 @@ public:
 
     double AsDouble() const noexcept;
 
-    long long AsInteger() const noexcept;
+    int64_t AsInteger() const noexcept;
 
     bool AsBool() const noexcept;
 
@@ -53,9 +53,9 @@ public:
 
     DVariant &operator=(double value) noexcept;
 
-    DVariant &operator=(long long value) noexcept;
+    DVariant &operator=(int64_t value) noexcept;
 
-    DVariant &operator=(int value) noexcept;
+    DVariant &operator=(int32_t value) noexcept;
 
     DVariant &operator=(bool value) noexcept;
 
