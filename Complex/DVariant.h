@@ -1,5 +1,5 @@
-#ifndef DVARIANT_H
-#define DVARIANT_H
+#ifndef DVARIANTCOMPLEX_H
+#define DVARIANTCOMPLEX_H
 
 #include <string>
 #include <cstring>
@@ -18,7 +18,6 @@ class DVariant {
     void (*m_objDestructor)(void *) = nullptr;
 
     void (*m_objCopy)(void *, void *) = nullptr;
-
 
     inline void modifyData(const void *from, size_t size, DVariant::Type type) {
         memset(m_data, 0, defaultSize);
@@ -270,4 +269,4 @@ public:
     }
 };
 
-#endif //DVARIANT_H
+#endif //DVARIANTCOMPLEX_H
