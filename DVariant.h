@@ -6,7 +6,7 @@
 
 class DVariant {
     enum class Type : u_int8_t {
-        Object, String, FloatingPoint, Integer, Boolean
+        CObject, String, FloatingPoint, Integer, Boolean, Object
     };
 
     static const size_t defaultSize = 9;
@@ -14,6 +14,11 @@ class DVariant {
     Type m_type;
     void *m_data;
     size_t m_size;
+
+    void (*m_objDestructor)(void *) = nullptr;
+
+    void (*m_objCopy)(void *, void *) = nullptr;
+
 
     inline void modifyData(const void *from, size_t size, DVariant::Type type) {
         memset(m_data, 0, defaultSize);
@@ -24,38 +29,46 @@ class DVariant {
 public:
     using Type = Type;
 
-    DVariant() noexcept: m_type(Type::String) {
+    DVariant() noexcept: m_type(Type::CObject) {
         m_size = defaultSize;
         m_data = calloc(m_size, 1);
+    }
+
+    template<class T>
+    DVariant(const T &value) noexcept: m_type(Type::Object) {
+        m_objDestructor = [](void *ptr) {
+            ((T *) ptr)->~T();
+        };
+        m_objCopy = [](void *dest, void *origin) {
+            new(dest) T(*((T *) origin));
+        };
+        auto size = sizeof(T);
+        m_size = size > defaultSize ? size : defaultSize;
+        m_data = malloc(m_size);
+        new(m_data) T(value);
     }
 
     /**
      * @warning only performs a shallow copy, do not use for complex objects.
      */
-    template<class T>
-    DVariant(const T &value) noexcept: m_type(Type::Object) {
-        auto size = sizeof(T);
-        m_size = size > defaultSize ? size : defaultSize;
-        m_data = malloc(m_size);
-        memcpy(m_data, &value, size);
-    }
-
-    DVariant(void *value, size_t size) noexcept: m_type(Type::Object) {
+    DVariant(void *value, size_t size) noexcept: m_type(Type::CObject) {
         m_size = size > defaultSize ? size : defaultSize;
         m_data = malloc(m_size);
         memcpy(m_data, value, size);
     }
 
     DVariant(const char *value) noexcept: m_type(Type::String) {
-        m_size = strlen(value) + 1;
-        m_data = malloc(m_size);
+        auto size = strlen(value) + 1;
+        m_size = size > defaultSize ? size : defaultSize;
+        m_data = calloc(m_size, 1);
         memcpy(m_data, value, m_size);
     }
 
     DVariant(const std::string &value) noexcept: m_type(Type::String) {
-        m_size = value.size() + 1;
-        m_data = malloc(m_size);
-        memcpy(m_data, value.c_str(), m_size);
+        auto size = value.size() + 1;
+        m_size = size > defaultSize ? size : defaultSize;
+        m_data = calloc(m_size, 1);
+        memcpy(m_data, value.c_str(), size);
     }
 
     DVariant(double value) noexcept: m_type(Type::FloatingPoint) {
@@ -84,33 +97,47 @@ public:
 
     DVariant(const DVariant &dVariant) noexcept {
         m_type = dVariant.m_type;
-        m_size = m_type == Type::String ? dVariant.m_size : defaultSize;
+        m_size = dVariant.m_size;
         m_data = malloc(m_size);
-        memcpy(m_data, dVariant.m_data, m_size);
+        if (m_type == Type::Object) {
+            m_objDestructor = dVariant.m_objDestructor;
+            m_objCopy = dVariant.m_objCopy;
+            m_objCopy(m_data, dVariant.m_data);
+        } else
+            memcpy(m_data, dVariant.m_data, m_size);
     }
 
     DVariant(DVariant &&dVariant) noexcept {
         m_type = dVariant.m_type;
         m_size = dVariant.m_size;
         m_data = dVariant.m_data;
+        m_objDestructor = dVariant.m_objDestructor;
+        m_objCopy = dVariant.m_objCopy;
         dVariant.m_data = nullptr;
     }
 
     ~DVariant() {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
         free(m_data);
     }
 
-    /**
-     * @warning only performs a shallow copy, do not use for complex objects.
-     */
     template<class T>
     void SetObject(const T &value) {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
+        m_objDestructor = [](void *ptr) {
+            ((T *) ptr)->~T();
+        };
+        m_objCopy = [](void *dest, void *origin) {
+            new(dest) T(*((T *) origin));
+        };
         auto size = sizeof(T);
         if (size > m_size) {
             m_data = realloc(m_data, size);
             m_size = size;
         }
-        memcpy(m_data, &value, size);
+        new(m_data) T(value);
         m_type = Type::Object;
     }
 
@@ -118,12 +145,14 @@ public:
      * @warning only performs a shallow copy, do not use for complex objects.
      */
     void SetObject(void *value, size_t size) noexcept {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
         if (size > m_size) {
             m_data = realloc(m_data, size);
             m_size = size;
         }
         memcpy(m_data, value, size);
-        m_type = Type::Object;
+        m_type = Type::CObject;
     }
 
     template<class T>
@@ -160,22 +189,29 @@ public:
         return m_type;
     }
 
-    /**
-     * @warning only performs a shallow copy, do not use for complex objects.
-     */
     template<class T>
     DVariant &operator=(const T &value) {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
+        m_objDestructor = [](void *ptr) {
+            ((T *) ptr)->~T();
+        };
+        m_objCopy = [](void *dest, void *origin) {
+            new(dest) T(*((T *) origin));
+        };
         auto size = sizeof(T);
         if (size > m_size) {
             m_data = realloc(m_data, size);
             m_size = size;
         }
-        memcpy(m_data, &value, size);
+        new(m_data) T(value);
         m_type = Type::Object;
         return *this;
     }
 
     DVariant &operator=(const char *value) noexcept {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
         size_t strSize = strlen(value) + 1;
         if (strSize > m_size) {
             m_data = realloc(m_data, strSize);
@@ -187,26 +223,36 @@ public:
     }
 
     DVariant &operator=(const std::string &value) noexcept {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
         operator=(value.c_str());
         return *this;
     }
 
     DVariant &operator=(double value) noexcept {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
         modifyData(&value, sizeof(value), Type::FloatingPoint);
         return *this;
     }
 
     DVariant &operator=(int64_t value) noexcept {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
         modifyData(&value, sizeof(value), Type::Integer);
         return *this;
     }
 
     DVariant &operator=(int32_t value) noexcept {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
         modifyData(&value, sizeof(value), Type::Integer);
         return *this;
     }
 
     DVariant &operator=(bool value) noexcept {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
         modifyData(&value, sizeof(value), Type::Boolean);
         return *this;
     }
@@ -214,20 +260,31 @@ public:
     DVariant &operator=(const DVariant &dVariant) noexcept {
         if (this == &dVariant)
             return *this;
-        if (dVariant.m_type == Type::String && dVariant.m_size > m_size) {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
+        if (dVariant.m_size > m_size) {
             m_data = realloc(m_data, dVariant.m_size);
             m_size = dVariant.m_size;
         }
-        memcpy(m_data, dVariant.m_data, dVariant.m_size);//check copy constructor
+        if (dVariant.m_type == Type::Object) {
+            m_objDestructor = dVariant.m_objDestructor;
+            m_objCopy = dVariant.m_objCopy;
+            m_objCopy(m_data, dVariant.m_data);
+        } else
+            memcpy(m_data, dVariant.m_data, dVariant.m_size);
         m_type = dVariant.m_type;
         return *this;
     }
 
     DVariant &operator=(DVariant &&dVariant) noexcept {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
         free(m_data);
         m_type = dVariant.m_type;
         m_size = dVariant.m_size;
         m_data = dVariant.m_data;
+        m_objDestructor = dVariant.m_objDestructor;
+        m_objCopy = dVariant.m_objCopy;
         dVariant.m_data = nullptr;
         return *this;
     }
