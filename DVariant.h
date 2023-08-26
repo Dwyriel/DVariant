@@ -26,6 +26,21 @@ class DVariant {
         m_type = type;
     }
 
+    inline void callObjectDestructor() {
+        if (m_type == Type::Object)
+            m_objDestructor(m_data);
+    }
+
+    template<class T>
+    inline void prepareLambdas() {
+        m_objDestructor = [](void *ptr) {
+            ((T *) ptr)->~T();
+        };
+        m_objCopy = [](void *dest, void *origin) {
+            new(dest) T(*((T *) origin));
+        };
+    }
+
 public:
     using Type = Type;
 
@@ -36,12 +51,7 @@ public:
 
     template<class T>
     DVariant(const T &value) noexcept: m_type(Type::Object) {
-        m_objDestructor = [](void *ptr) {
-            ((T *) ptr)->~T();
-        };
-        m_objCopy = [](void *dest, void *origin) {
-            new(dest) T(*((T *) origin));
-        };
+        prepareLambdas<T>();
         auto size = sizeof(T);
         m_size = size > defaultSize ? size : defaultSize;
         m_data = malloc(m_size);
@@ -117,21 +127,14 @@ public:
     }
 
     ~DVariant() {
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
+        callObjectDestructor();
         free(m_data);
     }
 
     template<class T>
     void SetObject(const T &value) {
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
-        m_objDestructor = [](void *ptr) {
-            ((T *) ptr)->~T();
-        };
-        m_objCopy = [](void *dest, void *origin) {
-            new(dest) T(*((T *) origin));
-        };
+        callObjectDestructor();
+        prepareLambdas<T>();
         auto size = sizeof(T);
         if (size > m_size) {
             m_data = realloc(m_data, size);
@@ -145,8 +148,7 @@ public:
      * @warning only performs a shallow copy, do not use for complex objects.
      */
     void SetObject(void *value, size_t size) noexcept {
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
+        callObjectDestructor();
         if (size > m_size) {
             m_data = realloc(m_data, size);
             m_size = size;
@@ -156,7 +158,7 @@ public:
     }
 
     template<class T>
-    T AsObject() {
+    T &AsObject() {
         return *(T *) m_data;
     }
 
@@ -191,27 +193,12 @@ public:
 
     template<class T>
     DVariant &operator=(const T &value) {
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
-        m_objDestructor = [](void *ptr) {
-            ((T *) ptr)->~T();
-        };
-        m_objCopy = [](void *dest, void *origin) {
-            new(dest) T(*((T *) origin));
-        };
-        auto size = sizeof(T);
-        if (size > m_size) {
-            m_data = realloc(m_data, size);
-            m_size = size;
-        }
-        new(m_data) T(value);
-        m_type = Type::Object;
+        SetObject(value);
         return *this;
     }
 
     DVariant &operator=(const char *value) noexcept {
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
+        callObjectDestructor();
         size_t strSize = strlen(value) + 1;
         if (strSize > m_size) {
             m_data = realloc(m_data, strSize);
@@ -223,36 +210,31 @@ public:
     }
 
     DVariant &operator=(const std::string &value) noexcept {
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
+        callObjectDestructor();
         operator=(value.c_str());
         return *this;
     }
 
     DVariant &operator=(double value) noexcept {
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
+        callObjectDestructor();
         modifyData(&value, sizeof(value), Type::FloatingPoint);
         return *this;
     }
 
     DVariant &operator=(int64_t value) noexcept {
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
+        callObjectDestructor();
         modifyData(&value, sizeof(value), Type::Integer);
         return *this;
     }
 
     DVariant &operator=(int32_t value) noexcept {
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
+        callObjectDestructor();
         modifyData(&value, sizeof(value), Type::Integer);
         return *this;
     }
 
     DVariant &operator=(bool value) noexcept {
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
+        callObjectDestructor();
         modifyData(&value, sizeof(value), Type::Boolean);
         return *this;
     }
@@ -260,8 +242,7 @@ public:
     DVariant &operator=(const DVariant &dVariant) noexcept {
         if (this == &dVariant)
             return *this;
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
+        callObjectDestructor();
         if (dVariant.m_size > m_size) {
             m_data = realloc(m_data, dVariant.m_size);
             m_size = dVariant.m_size;
@@ -277,8 +258,7 @@ public:
     }
 
     DVariant &operator=(DVariant &&dVariant) noexcept {
-        if (m_type == Type::Object)
-            m_objDestructor(m_data);
+        callObjectDestructor();
         free(m_data);
         m_type = dVariant.m_type;
         m_size = dVariant.m_size;
